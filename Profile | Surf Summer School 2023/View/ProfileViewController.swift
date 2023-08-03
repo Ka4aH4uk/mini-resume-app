@@ -4,14 +4,15 @@
 //
 //  Created by Ka4aH on 01.08.2023.
 //
+// The application contains the functionality of a mini-resume, the “My Skills” block is editable, the rest is hardcode. The screen can scroll. Development should be carried out on UIKit without third-party libraries, only by native means.
+
 
 import UIKit
 
 final class ProfileViewController: UIViewController {
-    //MARK: -- Private View
+    //MARK: -- Private Properties
     private lazy var scrollView: UIScrollView = {
         let scrollView = UIScrollView(frame: .zero)
-        scrollView.backgroundColor = .green
         scrollView.isUserInteractionEnabled = true
         scrollView.isScrollEnabled = true
         return scrollView
@@ -19,46 +20,52 @@ final class ProfileViewController: UIViewController {
     
     private lazy var contentView: UIView = {
         let contentView = UIView(frame: .zero)
-        contentView.backgroundColor = .red
-        //        contentView.layer.backgroundColor = UIColor(red: 0.953, green: 0.953, blue: 0.961, alpha: 1).cgColor
+        contentView.backgroundColor = .white
         return contentView
     }()
     
-    private let titleLabel: UILabel = {
+    private lazy var backView: UIView = {
+        let backView = UIView(frame: .zero)
+        backView.layer.backgroundColor = UIColor(red: 0.953, green: 0.953, blue: 0.961, alpha: 1).cgColor
+        return backView
+    }()
+    
+    private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
-        label.font = UIFont(name: "SFProDisplay-Bold", size: 16)
+        label.font = .sfproBold(size: 16)
         return label
     }()
     
-    private let profileImageView: UIImageView = {
+    private lazy var profileImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.contentMode = .scaleAspectFit
         imageView.layer.borderWidth = 2
-        imageView.layer.borderColor = UIColor.black.cgColor
+        imageView.layer.borderColor = UIColor.white.cgColor
         imageView.layer.cornerRadius = 60
         imageView.clipsToBounds = true
         return imageView
     }()
     
-    private let nameLabel: UILabel = {
+    private lazy var nameLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 2
         label.textAlignment = .center
-        label.font = UIFont.boldSystemFont(ofSize: 36)
+        label.font = .sfproBold(size: 24)
+        label.lineBreakMode = .byWordWrapping
         return label
     }()
     
-    private let sloganLabel: UILabel = {
+    private lazy var sloganLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 2
         label.textAlignment = .center
         label.textColor = UIColor(red: 0.588, green: 0.584, blue: 0.608, alpha: 1)
-        label.font = UIFont(name: "SFProDisplay-Regular", size: 14)
+        label.font = .sfproRegular(size: 14)
         return label
     }()
     
-    private let locationStackView: UIStackView = {
+    private lazy var locationStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.spacing = 4
@@ -66,60 +73,108 @@ final class ProfileViewController: UIViewController {
         return stackView
     }()
     
-    private let locationIconImageView: UIImageView = {
+    private lazy var locationIconImageView: UIImageView = {
         let imageView = UIImageView()
         imageView.image = UIImage(named: "pin")
         imageView.contentMode = .scaleAspectFit
         return imageView
     }()
     
-    private let locationLabel: UILabel = {
+    private lazy var locationLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 1
         label.textColor = UIColor(red: 0.588, green: 0.584, blue: 0.608, alpha: 1)
-        label.font = UIFont(name: "SFProDisplay-Regular", size: 14)
+        label.font = .sfproRegular(size: 14)
         return label
     }()
     
     
-    private let skillsTitleStackView: UIStackView = {
+    private lazy var skillsTitleStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .horizontal
         stackView.spacing = 8
-        stackView.backgroundColor = .white
         return stackView
     }()
     
-    private let skillsTitleLabel: UILabel = {
+    private lazy var skillsTitleLabel: UILabel = {
         let label = UILabel()
         label.text = "Мои навыки"
         label.textColor = UIColor(red: 0.192, green: 0.192, blue: 0.192, alpha: 1)
-        label.font = UIFont(name: "SFProDisplay-Medium", size: 16)
+        label.font = .sfproMedium(size: 16)
         return label
     }()
     
     private lazy var editSkillsButton: UIButton = {
         let button = UIButton(type: .custom)
         button.setImage(UIImage(named: "edit"), for: .normal)
-        button.setImage(UIImage(named: "done"), for: .selected)
-        button.addTarget(self, action: #selector(editSkillsButtonTapped), for: .touchUpInside)
+//        button.setImage(UIImage(named: "done"), for: .selected)
+        button.addTarget(self, action: #selector(editButtonTapped), for: .touchUpInside)
         return button
     }()
     
-//    private let skillsCollectionView: UICollectionView = {
-//        let collectionViewLayout = UICollectionViewFlowLayout()
-//        collectionViewLayout.scrollDirection = .vertical
-//        collectionViewLayout.minimumLineSpacing = 8
-//        collectionViewLayout.minimumInteritemSpacing = 8
-//        collectionViewLayout.estimatedItemSize = UICollectionViewFlowLayout.automaticSize
-//        let collectionView = UICollectionView(frame: .null, collectionViewLayout: collectionViewLayout)
-//        collectionView.translatesAutoresizingMaskIntoConstraints = false
-//        collectionView.backgroundColor = .blue
-//        return collectionView
-//    }()
-    
     private lazy var skillsCollectionView = UICollectionView(frame: .zero, collectionViewLayout: makeLayout())
     
+    private let aboutMeTitleStackView: UIStackView = {
+        let stackView = UIStackView()
+        stackView.axis = .vertical
+        stackView.spacing = 8
+        return stackView
+    }()
+    
+    private let aboutMeTitleLabel: UILabel = {
+        let label = UILabel()
+        label.text = "О себе"
+        label.textColor = UIColor(red: 0.192, green: 0.192, blue: 0.192, alpha: 1)
+        label.font = .sfproMedium(size: 16)
+        return label
+    }()
+    
+    private let aboutMeTextLabel: UILabel = {
+        let label = UILabel()
+        label.textColor = UIColor(red: 0.192, green: 0.192, blue: 0.192, alpha: 1)
+        label.font = .sfproRegular(size: 14)
+        label.lineBreakMode = .byWordWrapping
+        label.numberOfLines = 0
+        return label
+    }()
+    
+    private lazy var skillsCollectionViewHeightConstraint: NSLayoutConstraint = {
+        return skillsCollectionView.heightAnchor.constraint(equalToConstant: UIScreen.main.bounds.height)
+    }()
+    
+    private var isEditingSkills = false
+    private var presenter: ProfilePresenter?
+    
+    //MARK: -- Life Cycles Methods
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
+        setupView()
+        setupConstraints()
+        
+        skillsCollectionView.dataSource = self
+        skillsCollectionView.delegate = self
+        skillsCollectionView.register(SkillCollectionViewCell.self, forCellWithReuseIdentifier: "SkillCell")
+        skillsCollectionView.isScrollEnabled = false
+        skillsCollectionView.addObserver(self, forKeyPath: "contentSize", options: .new, context: nil)
+
+        presenter = ProfilePresenter(view: self)
+        presenter?.setView()
+    }
+    
+    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
+        if keyPath == "contentSize", object as AnyObject? === skillsCollectionView {
+            let newHeight = skillsCollectionView.collectionViewLayout.collectionViewContentSize.height
+            skillsCollectionViewHeightConstraint.constant = newHeight + 20
+            contentView.layoutIfNeeded()
+        }
+    }
+    
+    deinit {
+        skillsCollectionView.removeObserver(self, forKeyPath: "contentSize")
+    }
+    
+    //MARK: -- Private Methods
     private func makeLayout() -> UICollectionViewLayout {
         UICollectionViewCompositionalLayout { sectionIndex, env in
             let itemSize = NSCollectionLayoutSize(widthDimension: .estimated(80), heightDimension: .fractionalHeight(1.0))
@@ -135,55 +190,28 @@ final class ProfileViewController: UIViewController {
         }
     }
     
-    private let aboutMeTitleStackView: UIStackView = {
-        let stackView = UIStackView()
-        stackView.axis = .vertical
-        stackView.spacing = 8
-        stackView.backgroundColor = .white
-        return stackView
-    }()
+//    @objc private func editSkillsButtonTapped() {
+//        editSkillsButton.isSelected = !editSkillsButton.isSelected
+//
+//        if isEditingSkills {
+//            presenter?.saveSkills(getSkillsFromCollectionView())
+//        } else {
+//            presenter?.didTapEditSkills()
+//        }
+//    }
     
-    private let aboutMeTitleLabel: UILabel = {
-        let label = UILabel()
-        label.text = "О себе"
-        label.textColor = UIColor(red: 0.192, green: 0.192, blue: 0.192, alpha: 1)
-        label.font = UIFont(name: "SFProDisplay-Medium", size: 16)
-        return label
-    }()
-    
-    private let aboutMeTextLabel: UILabel = {
-        let label = UILabel()
-        label.textColor = UIColor(red: 0.192, green: 0.192, blue: 0.192, alpha: 1)
-        label.font = UIFont(name: "SFProDisplay-Regular", size: 14)
-        label.numberOfLines = 0
-        return label
-    }()
-    
-    private var isEditingSkills = false
-    private var presenter: ProfilePresenter!
-    
-    override func viewDidLoad() {
-        super.viewDidLoad()
-        
-        setupView()
-        setupConstraints()
-        
-        skillsCollectionView.dataSource = self
-        skillsCollectionView.delegate = self
-        skillsCollectionView.register(SkillCollectionViewCell.self, forCellWithReuseIdentifier: "SkillCell")
-        
-        presenter = ProfilePresenter(view: self)
-        presenter.setView()
-    }
-    
-    @objc private func editSkillsButtonTapped() {
-        editSkillsButton.isSelected = !editSkillsButton.isSelected
+    @objc private func editButtonTapped() {
+        isEditingSkills.toggle()
         
         if isEditingSkills {
-            presenter.saveSkills(getSkillsFromCollectionView())
+            presenter?.userProfile.skills.append("+")
+            editSkillsButton.setImage(UIImage(named: "done"), for: .normal)
         } else {
-            presenter.didTapEditSkills()
+            presenter?.userProfile.skills.remove(at: (presenter?.userProfile.skills.count)! - 1)
+            editSkillsButton.setImage(UIImage(named: "edit"), for: .normal)
         }
+        
+        skillsCollectionView.reloadData()
     }
 }
 
@@ -214,7 +242,7 @@ extension ProfileViewController: ProfileView {
         
         let addAction = UIAlertAction(title: "Добавить", style: .default) { [weak self] _ in
             if let skillName = alertController.textFields?.first?.text, !skillName.isEmpty {
-                self?.presenter.saveSkills(self?.getSkillsFromCollectionView() ?? [] + [skillName])
+                self?.presenter?.saveSkills(self?.getSkillsFromCollectionView() ?? [] + [skillName])
             }
         }
         let cancelAction = UIAlertAction(title: "Отмена", style: .cancel, handler: nil)
@@ -232,20 +260,20 @@ extension ProfileViewController: ProfileView {
 // MARK: -- UICollectionViewDataSource, UICollectionViewDelegateFlowLayout
 extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return presenter.userProfile.skills.count
+        return presenter?.userProfile.skills.count ?? 0
     }
-
+    
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SkillCell", for: indexPath) as? SkillCollectionViewCell else {
             fatalError()
         }
-        
-        let skill = presenter.userProfile.skills[indexPath.row]
-        cell.configure(with: skill)
-        
+
+        let skill = presenter?.userProfile.skills[indexPath.row]
+        cell.configure(with: skill ?? "")
+
         return cell
     }
-
+    
     func getSkillsFromCollectionView() -> [String] {
         let visibleCells = skillsCollectionView.visibleCells
         return visibleCells.compactMap { cell in
@@ -258,10 +286,10 @@ extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDel
     
     func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if isEditingSkills {
-            if indexPath.item < presenter.userProfile.skills.count {
-                presenter.deleteSkill(at: indexPath.item)
-            } else if indexPath.item == presenter.userProfile.skills.count {
-                presenter.didTapAddSkill()
+            if indexPath.item < presenter?.userProfile.skills.count ?? 0 {
+                presenter?.deleteSkill(at: indexPath.item)
+            } else if indexPath.item == presenter?.userProfile.skills.count {
+                presenter?.didTapAddSkill()
             }
         }
     }
@@ -270,10 +298,9 @@ extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDel
 // MARK: - SetupUI, SetupConstraints
 extension ProfileViewController {
     private func setupView() {
-        view.backgroundColor = .white
-        
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
+        contentView.addSubview(backView)
         contentView.addSubview(titleLabel)
         contentView.addSubview(profileImageView)
         contentView.addSubview(nameLabel)
@@ -296,86 +323,115 @@ extension ProfileViewController {
     private func setupConstraints() {
         scrollView.translatesAutoresizingMaskIntoConstraints = false
         contentView.translatesAutoresizingMaskIntoConstraints = false
+        backView.translatesAutoresizingMaskIntoConstraints = false
         titleLabel.translatesAutoresizingMaskIntoConstraints = false
         profileImageView.translatesAutoresizingMaskIntoConstraints = false
         nameLabel.translatesAutoresizingMaskIntoConstraints = false
         sloganLabel.translatesAutoresizingMaskIntoConstraints = false
         locationStackView.translatesAutoresizingMaskIntoConstraints = false
-        skillsTitleStackView.translatesAutoresizingMaskIntoConstraints = false
-        skillsCollectionView.translatesAutoresizingMaskIntoConstraints = false
-        aboutMeTitleStackView.translatesAutoresizingMaskIntoConstraints = false
         locationIconImageView.translatesAutoresizingMaskIntoConstraints = false
         locationLabel.translatesAutoresizingMaskIntoConstraints = false
+        skillsTitleStackView.translatesAutoresizingMaskIntoConstraints = false
         skillsTitleLabel.translatesAutoresizingMaskIntoConstraints = false
         editSkillsButton.translatesAutoresizingMaskIntoConstraints = false
+        skillsCollectionView.translatesAutoresizingMaskIntoConstraints = false
+        aboutMeTitleStackView.translatesAutoresizingMaskIntoConstraints = false
         aboutMeTitleLabel.translatesAutoresizingMaskIntoConstraints = false
         aboutMeTextLabel.translatesAutoresizingMaskIntoConstraints = false
-        
+                
+        // scrollView
         NSLayoutConstraint.activate([
-            // ScrollView
-            scrollView.leadingAnchor.constraint(equalTo: view.leadingAnchor),
-            scrollView.trailingAnchor.constraint(equalTo: view.trailingAnchor),
-            scrollView.topAnchor.constraint(equalTo: view.topAnchor),
-            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor),
-            
-            // ContentView
-            contentView.leadingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.leadingAnchor),
-            contentView.trailingAnchor.constraint(equalTo: scrollView.contentLayoutGuide.trailingAnchor),
-            contentView.topAnchor.constraint(equalTo: scrollView.contentLayoutGuide.topAnchor),
-            contentView.bottomAnchor.constraint(equalTo: scrollView.contentLayoutGuide.bottomAnchor),
-            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor),
-            
-            // Title Label
-            titleLabel.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor, constant: 18),
+            scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),
+            scrollView.leadingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.leadingAnchor),
+            scrollView.trailingAnchor.constraint(equalTo: view.safeAreaLayoutGuide.trailingAnchor),
+            scrollView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+        ])
+        
+        // contentView
+        NSLayoutConstraint.activate([
+            contentView.topAnchor.constraint(equalTo: scrollView.topAnchor),
+            contentView.leadingAnchor.constraint(equalTo: scrollView.leadingAnchor),
+            contentView.trailingAnchor.constraint(equalTo: scrollView.trailingAnchor),
+            contentView.bottomAnchor.constraint(equalTo: scrollView.bottomAnchor),
+            contentView.widthAnchor.constraint(equalTo: scrollView.widthAnchor)
+        ])
+        
+        // backView
+        NSLayoutConstraint.activate([
+            backView.topAnchor.constraint(equalTo: contentView.topAnchor),
+            backView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor),
+            backView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor),
+            backView.heightAnchor.constraint(equalToConstant: 330)
+        ])
+        
+        // titleLabel
+        NSLayoutConstraint.activate([
             titleLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            
-            // Profile Image
-            profileImageView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 42),
+            titleLabel.topAnchor.constraint(equalTo: contentView.topAnchor, constant: 18)
+        ])
+        
+        // profileImageView
+        NSLayoutConstraint.activate([
             profileImageView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            profileImageView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 24),
             profileImageView.widthAnchor.constraint(equalToConstant: 120),
-            profileImageView.heightAnchor.constraint(equalToConstant: 120),
-            
-            // Name Label
-            nameLabel.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 178),
+            profileImageView.heightAnchor.constraint(equalToConstant: 120)
+        ])
+        
+        // nameLabel
+        NSLayoutConstraint.activate([
+            nameLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            nameLabel.topAnchor.constraint(equalTo: profileImageView.bottomAnchor, constant: 16),
             nameLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             nameLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            
-            // Slogan Label
-            sloganLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 8),
+        ])
+        
+        // sloganLabel
+        NSLayoutConstraint.activate([
+            sloganLabel.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            sloganLabel.topAnchor.constraint(equalTo: nameLabel.bottomAnchor, constant: 4),
             sloganLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            sloganLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            
-            // Location StackView
-            locationStackView.topAnchor.constraint(equalTo: sloganLabel.bottomAnchor, constant: 8),
+            sloganLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
+        ])
+        
+        // locationStackView (horizontal) with locationIconImageView and locationLabel
+        NSLayoutConstraint.activate([
             locationStackView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            locationStackView.leadingAnchor.constraint(greaterThanOrEqualTo: contentView.leadingAnchor, constant: 16),
-            locationStackView.trailingAnchor.constraint(lessThanOrEqualTo: contentView.trailingAnchor, constant: -16),
-
-            // Skills Title StackView
-            skillsTitleStackView.topAnchor.constraint(equalTo: locationStackView.bottomAnchor, constant: 16),
+            locationStackView.topAnchor.constraint(equalTo: sloganLabel.bottomAnchor, constant: 4),
+            locationIconImageView.widthAnchor.constraint(equalToConstant: 16),
+            locationIconImageView.heightAnchor.constraint(equalToConstant: 16)
+        ])
+        
+        // skillsTitleStackView (horizontal) with skillsTitleLabel and editSkillsButton
+        NSLayoutConstraint.activate([
+            skillsTitleStackView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
+            skillsTitleStackView.topAnchor.constraint(equalTo: locationStackView.bottomAnchor, constant: 40),
             skillsTitleStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            skillsTitleStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            
-            // Skills Collection View
+            skillsTitleStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16)
+        ])
+        
+        // editSkillsButton
+        NSLayoutConstraint.activate([
+            editSkillsButton.widthAnchor.constraint(equalToConstant: 24),
+            editSkillsButton.heightAnchor.constraint(equalToConstant: 24)
+        ])
+        
+        // skillsCollectionView
+        NSLayoutConstraint.activate([
+            skillsCollectionView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             skillsCollectionView.topAnchor.constraint(equalTo: skillsTitleStackView.bottomAnchor, constant: 8),
             skillsCollectionView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             skillsCollectionView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            skillsCollectionView.heightAnchor.constraint(equalToConstant: 200),
-            
-            // About Me Title StackView
+            skillsCollectionViewHeightConstraint
+        ])
+        
+        // aboutMeTitleStackView (vertical) with aboutMeTitleLabel and aboutMeTextLabel
+        NSLayoutConstraint.activate([
+            aboutMeTitleStackView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
             aboutMeTitleStackView.topAnchor.constraint(equalTo: skillsCollectionView.bottomAnchor, constant: 24),
             aboutMeTitleStackView.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
             aboutMeTitleStackView.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-
-            // About Me Title Label
-            aboutMeTitleLabel.leadingAnchor.constraint(equalTo: aboutMeTitleStackView.leadingAnchor),
-            aboutMeTitleLabel.trailingAnchor.constraint(equalTo: aboutMeTitleStackView.trailingAnchor),
-
-            // About Me Text Label
-            aboutMeTextLabel.topAnchor.constraint(equalTo: aboutMeTitleLabel.bottomAnchor, constant: 8),
-            aboutMeTextLabel.leadingAnchor.constraint(equalTo: contentView.leadingAnchor, constant: 16),
-            aboutMeTextLabel.trailingAnchor.constraint(equalTo: contentView.trailingAnchor, constant: -16),
-            aboutMeTextLabel.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16)
+            aboutMeTitleStackView.bottomAnchor.constraint(equalTo: contentView.bottomAnchor, constant: -16)
         ])
     }
 }

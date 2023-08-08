@@ -107,21 +107,21 @@ final class ProfileViewController: UIViewController {
     private lazy var editSkillsButton: UIButton = {
         let button = UIButton(type: .custom)
         button.setImage(UIImage(named: "edit"), for: .normal)
-//        button.setImage(UIImage(named: "done"), for: .selected)
+        button.setImage(UIImage(named: "done"), for: .selected)
         button.addTarget(self, action: #selector(editButtonTapped), for: .touchUpInside)
         return button
     }()
     
     private lazy var skillsCollectionView = UICollectionView(frame: .zero, collectionViewLayout: makeLayout())
     
-    private let aboutMeTitleStackView: UIStackView = {
+    private lazy var aboutMeTitleStackView: UIStackView = {
         let stackView = UIStackView()
         stackView.axis = .vertical
         stackView.spacing = 8
         return stackView
     }()
     
-    private let aboutMeTitleLabel: UILabel = {
+    private lazy var aboutMeTitleLabel: UILabel = {
         let label = UILabel()
         label.text = "О себе"
         label.textColor = UIColor(red: 0.192, green: 0.192, blue: 0.192, alpha: 1)
@@ -129,7 +129,7 @@ final class ProfileViewController: UIViewController {
         return label
     }()
     
-    private let aboutMeTextLabel: UILabel = {
+    private lazy var aboutMeTextLabel: UILabel = {
         let label = UILabel()
         label.textColor = UIColor(red: 0.192, green: 0.192, blue: 0.192, alpha: 1)
         label.font = .sfproRegular(size: 14)
@@ -138,11 +138,30 @@ final class ProfileViewController: UIViewController {
         return label
     }()
     
+    private lazy var addSkillAlertController: UIAlertController = {
+        let alertController = UIAlertController(title: "Добавление навыка", message: "Введите название навыка, которым вы владеете", preferredStyle: .alert)
+        alertController.addTextField { textField in
+            textField.placeholder = "Введите название"
+        }
+        
+        let addAction = UIAlertAction(title: "Добавить", style: .default) { [weak self] _ in
+            if let skillName = alertController.textFields?.first?.text, !skillName.isEmpty {
+                self?.presenter?.saveSkills(self?.getSkillsFromCollectionView() ?? [] + [skillName])
+            }
+        }
+        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel, handler: nil)
+        alertController.addAction(addAction)
+        alertController.addAction(cancelAction)
+        
+        return alertController
+    }()
+    
     private lazy var skillsCollectionViewHeightConstraint: NSLayoutConstraint = {
         return skillsCollectionView.heightAnchor.constraint(equalToConstant: UIScreen.main.bounds.height)
     }()
     
     private var isEditingSkills = false
+    private var showAddSkillCell = false
     private var presenter: ProfilePresenter?
     
     //MARK: -- Life Cycles Methods
@@ -155,9 +174,10 @@ final class ProfileViewController: UIViewController {
         skillsCollectionView.dataSource = self
         skillsCollectionView.delegate = self
         skillsCollectionView.register(SkillCollectionViewCell.self, forCellWithReuseIdentifier: "SkillCell")
+        skillsCollectionView.register(AddSkillCollectionViewCell.self, forCellWithReuseIdentifier: "AddSkillCell")
         skillsCollectionView.isScrollEnabled = false
         skillsCollectionView.addObserver(self, forKeyPath: "contentSize", options: .new, context: nil)
-
+        
         presenter = ProfilePresenter(view: self)
         presenter?.setView()
     }
@@ -190,28 +210,10 @@ final class ProfileViewController: UIViewController {
         }
     }
     
-//    @objc private func editSkillsButtonTapped() {
-//        editSkillsButton.isSelected = !editSkillsButton.isSelected
-//
-//        if isEditingSkills {
-//            presenter?.saveSkills(getSkillsFromCollectionView())
-//        } else {
-//            presenter?.didTapEditSkills()
-//        }
-//    }
-    
     @objc private func editButtonTapped() {
         isEditingSkills.toggle()
-        
-        if isEditingSkills {
-            presenter?.userProfile.skills.append("+")
-            editSkillsButton.setImage(UIImage(named: "done"), for: .normal)
-        } else {
-            presenter?.userProfile.skills.remove(at: (presenter?.userProfile.skills.count)! - 1)
-            editSkillsButton.setImage(UIImage(named: "edit"), for: .normal)
-        }
-        
-        skillsCollectionView.reloadData()
+        showAddSkillCell = isEditingSkills
+        showEditSkillsMode(isEditingSkills)
     }
 }
 
@@ -223,9 +225,6 @@ extension ProfileViewController: ProfileView {
         sloganLabel.text = profile.slogan
         locationLabel.text = profile.location
         aboutMeTextLabel.text = profile.aboutMe
-        
-        showEditSkillsMode(isEditingSkills)
-        skillsCollectionView.reloadData()
     }
     
     func showEditSkillsMode(_ isEditing: Bool) {
@@ -234,22 +233,8 @@ extension ProfileViewController: ProfileView {
         skillsCollectionView.reloadData()
     }
     
-    func showEditSkillAlert() {
-        let alertController = UIAlertController(title: "Добавление нового навыка", message: "Введите название навыка, которым вы владеете", preferredStyle: .alert)
-        alertController.addTextField { textField in
-            textField.placeholder = "Введите название"
-        }
-        
-        let addAction = UIAlertAction(title: "Добавить", style: .default) { [weak self] _ in
-            if let skillName = alertController.textFields?.first?.text, !skillName.isEmpty {
-                self?.presenter?.saveSkills(self?.getSkillsFromCollectionView() ?? [] + [skillName])
-            }
-        }
-        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel, handler: nil)
-        alertController.addAction(addAction)
-        alertController.addAction(cancelAction)
-        
-        present(alertController, animated: true, completion: nil)
+    func showEditSkillAlert(completion: @escaping (String?) -> Void) {
+        present(addSkillAlertController, animated: true, completion: nil)
     }
     
     func reloadSkills() {
@@ -260,18 +245,34 @@ extension ProfileViewController: ProfileView {
 // MARK: -- UICollectionViewDataSource, UICollectionViewDelegateFlowLayout
 extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDelegateFlowLayout {
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return presenter?.userProfile.skills.count ?? 0
+        return (presenter?.userProfile.skills.count ?? 0) + (showAddSkillCell ? 1 : 0)
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        guard let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SkillCell", for: indexPath) as? SkillCollectionViewCell else {
-            fatalError()
+        if indexPath.item == presenter?.userProfile.skills.count && showAddSkillCell {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddSkillCell", for: indexPath) as! AddSkillCollectionViewCell
+            
+            cell.addButtonTappedHandler = { [weak self] in
+                self?.presenter?.didTapAddSkill()
+            }
+            
+            return cell
+        } else {
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SkillCell", for: indexPath) as! SkillCollectionViewCell
+            
+            let skill = presenter?.userProfile.skills[indexPath.row]
+            cell.configure(with: skill ?? "")
+            
+            return cell
         }
-
-        let skill = presenter?.userProfile.skills[indexPath.row]
-        cell.configure(with: skill ?? "")
-
-        return cell
+    }
+    
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        if isEditingSkills {
+            if indexPath.item < presenter?.userProfile.skills.count ?? 0 {
+                presenter?.deleteSkill(at: indexPath.item)
+            }
+        }
     }
     
     func getSkillsFromCollectionView() -> [String] {
@@ -281,16 +282,6 @@ extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDel
                 return skillName
             }
             return nil
-        }
-    }
-    
-    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
-        if isEditingSkills {
-            if indexPath.item < presenter?.userProfile.skills.count ?? 0 {
-                presenter?.deleteSkill(at: indexPath.item)
-            } else if indexPath.item == presenter?.userProfile.skills.count {
-                presenter?.didTapAddSkill()
-            }
         }
     }
 }
@@ -338,7 +329,7 @@ extension ProfileViewController {
         aboutMeTitleStackView.translatesAutoresizingMaskIntoConstraints = false
         aboutMeTitleLabel.translatesAutoresizingMaskIntoConstraints = false
         aboutMeTextLabel.translatesAutoresizingMaskIntoConstraints = false
-                
+        
         // scrollView
         NSLayoutConstraint.activate([
             scrollView.topAnchor.constraint(equalTo: view.safeAreaLayoutGuide.topAnchor),

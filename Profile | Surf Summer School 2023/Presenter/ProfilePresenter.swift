@@ -5,13 +5,12 @@
 //  Created by Ka4aH on 01.08.2023.
 //
 
-import Foundation
 import UIKit
 
 protocol ProfileView: AnyObject {
     func showProfile(_ profile: UserProfile)
     func showEditSkillsMode(_ isEditing: Bool)
-    func showEditSkillAlert()
+    func showEditSkillAlert(completion: @escaping (String?) -> Void)
     func reloadSkills()
 }
 
@@ -29,7 +28,7 @@ class ProfilePresenter: ProfilePresenterProtocol {
     
     init(view: ProfileView) {
         self.view = view
-        self.userProfile = UserProfile(label: "Профиль", photo: UIImage(named: "me") ?? UIImage(cgImage: "photo" as! CGImage), name: "Кочетков Константин Евгеньевич", slogan: "Начинающий iOS-разработчик, опыт менее 1 года", location: "Москва, Россия", skills: ["MVP/MVVM", "Rest API", "Xcode", "DataSource", "SOLID", "Git", "SwiftUI", "CoreData", "Lottie", "XCTests"], aboutMe: "Я недавно успешно завершил курс iOS-разработчика, который дал мне уникальную возможность окунуться в мир разработки приложений для iOS и расширить свои навыки в этой увлекательной сфере.Я недавно успешно завершил курс iOS-разработчика, который дал мне уникальную возможность окунуться в мир разработки приложений для iOS и расширить свои навыки в этой увлекательной сфере.Я недавно успешно завершил курс iOS-разработчика, который дал мне уникальную возможность окунуться в мир разработки приложений для iOS и расширить свои навыки в этой увлекательной сфере.Я недавно успешно завершил курс iOS-разработчика, который дал мне уникальную возможность окунуться в мир разработки приложений для iOS и расширить свои навыки в этой увлекательной сфере.Я недавно успешно завершил курс iOS-разработчика, который дал мне уникальную возможность окунуться в мир разработки приложений для iOS и расширить свои навыки в этой увлекательной сфере.")
+        self.userProfile = UserProfile(label: "Профиль", photo: UIImage(named: "me") ?? UIImage(cgImage: "photo" as! CGImage), name: "Кочетков Константин Евгеньевич", slogan: "Начинающий iOS-разработчик, опыт менее 1 года", location: "Москва, Россия", skills: ["MVP/MVVM", "Rest API", "Xcode", "DataSource", "SOLID", "Git", "SwiftUI", "CoreData", "Lottie", "XCTests"], aboutMe: "Я недавно успешно завершил курс iOS-разработчика, который дал мне уникальную возможность окунуться в мир разработки приложений для iOS и расширить свои навыки в этой увлекательной сфере.")
     }
     
     func setView() {
@@ -41,7 +40,13 @@ class ProfilePresenter: ProfilePresenterProtocol {
     }
     
     func didTapAddSkill() {
-        view?.showEditSkillAlert()
+        view?.showEditSkillAlert { [weak self] skillName in
+            if let skillName = skillName, !skillName.isEmpty {
+                var updatedSkills = self?.userProfile.skills ?? []
+                updatedSkills.append(skillName)
+                self?.saveSkills(updatedSkills)
+            }
+        }
     }
     
     func deleteSkill(at index: Int) {

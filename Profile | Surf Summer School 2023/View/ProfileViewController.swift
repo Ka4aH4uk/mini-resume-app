@@ -168,7 +168,7 @@ final class ProfileViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        setupView()
+        setupUI()
         setupConstraints()
         
         skillsCollectionView.dataSource = self
@@ -249,7 +249,7 @@ extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDel
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
-        if indexPath.item == presenter?.userProfile.skills.count && showAddSkillCell {
+        if indexPath.item == presenter?.userProfile.skills.count {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddSkillCell", for: indexPath) as! AddSkillCollectionViewCell
             
             cell.addButtonTappedHandler = { [weak self] in
@@ -261,7 +261,12 @@ extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDel
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SkillCell", for: indexPath) as! SkillCollectionViewCell
             
             let skill = presenter?.userProfile.skills[indexPath.row]
-            cell.configure(with: skill ?? "")
+            cell.configure(with: skill ?? "", maxWidth: skillsCollectionView.bounds.width)
+            cell.isEditing = isEditingSkills
+            
+            cell.deleteButtonTappedHandler = { [weak self] in
+                self?.presenter?.deleteSkill(at: indexPath.row)
+            }
             
             return cell
         }
@@ -288,7 +293,7 @@ extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDel
 
 // MARK: - SetupUI, SetupConstraints
 extension ProfileViewController {
-    private func setupView() {
+    private func setupUI() {
         view.addSubview(scrollView)
         scrollView.addSubview(contentView)
         contentView.addSubview(backView)

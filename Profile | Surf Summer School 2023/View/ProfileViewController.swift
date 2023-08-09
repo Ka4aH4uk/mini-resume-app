@@ -15,6 +15,7 @@ final class ProfileViewController: UIViewController {
         let scrollView = UIScrollView(frame: .zero)
         scrollView.isUserInteractionEnabled = true
         scrollView.isScrollEnabled = true
+        scrollView.showsVerticalScrollIndicator = false
         return scrollView
     }()
     
@@ -146,7 +147,7 @@ final class ProfileViewController: UIViewController {
         
         let addAction = UIAlertAction(title: "Добавить", style: .default) { [weak self] _ in
             if let skillName = alertController.textFields?.first?.text, !skillName.isEmpty {
-                self?.presenter?.saveSkills(self?.getSkillsFromCollectionView() ?? [] + [skillName])
+                self?.presenter?.saveSkills((self?.presenter?.userProfile.skills ?? []) + [skillName])
             }
         }
         let cancelAction = UIAlertAction(title: "Отмена", style: .cancel, handler: nil)
@@ -167,6 +168,8 @@ final class ProfileViewController: UIViewController {
     //MARK: -- Life Cycles Methods
     override func viewDidLoad() {
         super.viewDidLoad()
+        
+        view.backgroundColor = UIColor(red: 0.953, green: 0.953, blue: 0.961, alpha: 1)
         
         setupUI()
         setupConstraints()
@@ -256,6 +259,8 @@ extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDel
                 self?.presenter?.didTapAddSkill()
             }
             
+            cell.isHidden = !isEditingSkills
+
             return cell
         } else {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SkillCell", for: indexPath) as! SkillCollectionViewCell
@@ -369,7 +374,7 @@ extension ProfileViewController {
         // profileImageView
         NSLayoutConstraint.activate([
             profileImageView.centerXAnchor.constraint(equalTo: contentView.centerXAnchor),
-            profileImageView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 24),
+            profileImageView.topAnchor.constraint(equalTo: titleLabel.bottomAnchor, constant: 42),
             profileImageView.widthAnchor.constraint(equalToConstant: 120),
             profileImageView.heightAnchor.constraint(equalToConstant: 120)
         ])

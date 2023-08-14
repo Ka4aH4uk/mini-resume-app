@@ -158,7 +158,7 @@ final class ProfileViewController: UIViewController {
     }()
     
     private lazy var skillsCollectionViewHeightConstraint: NSLayoutConstraint = {
-        return skillsCollectionView.heightAnchor.constraint(equalToConstant: UIScreen.main.bounds.height)
+        return skillsCollectionView.heightAnchor.constraint(equalToConstant: 56)
     }()
     
     private var isEditingSkills = false
@@ -176,25 +176,19 @@ final class ProfileViewController: UIViewController {
         
         skillsCollectionView.dataSource = self
         skillsCollectionView.delegate = self
+        skillsCollectionView.isScrollEnabled = false
         skillsCollectionView.register(SkillCollectionViewCell.self, forCellWithReuseIdentifier: "SkillCell")
         skillsCollectionView.register(AddSkillCollectionViewCell.self, forCellWithReuseIdentifier: "AddSkillCell")
-        skillsCollectionView.isScrollEnabled = false
-        skillsCollectionView.addObserver(self, forKeyPath: "contentSize", options: .new, context: nil)
         
         presenter = ProfilePresenter(view: self)
         presenter?.setView()
+        
+        reloadSkills()
     }
     
-    override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey: Any]?, context: UnsafeMutableRawPointer?) {
-        if keyPath == "contentSize", object as AnyObject? === skillsCollectionView {
-            let newHeight = skillsCollectionView.collectionViewLayout.collectionViewContentSize.height
-            skillsCollectionViewHeightConstraint.constant = newHeight + 20
-            contentView.layoutIfNeeded()
-        }
-    }
-    
-    deinit {
-        skillsCollectionView.removeObserver(self, forKeyPath: "contentSize")
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        updateCollectionViewHeight()
     }
     
     //MARK: -- Private Methods
@@ -213,10 +207,19 @@ final class ProfileViewController: UIViewController {
         }
     }
     
+    private func updateCollectionViewHeight() {
+        let contentHeight = skillsCollectionView.contentSize.height
+        let minimumHeight: CGFloat = 56
+        let newHeight = max(contentHeight + 20, minimumHeight)
+        skillsCollectionViewHeightConstraint.constant = newHeight
+        contentView.layoutIfNeeded()
+    }
+    
     @objc private func editButtonTapped() {
         isEditingSkills.toggle()
         showAddSkillCell = isEditingSkills
         showEditSkillsMode(isEditingSkills)
+        reloadSkills()
     }
 }
 
@@ -242,6 +245,8 @@ extension ProfileViewController: ProfileView {
     
     func reloadSkills() {
         skillsCollectionView.reloadData()
+        skillsCollectionView.layoutIfNeeded()
+        updateCollectionViewHeight()
     }
 }
 
@@ -250,7 +255,7 @@ extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDel
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return (presenter?.userProfile.skills.count ?? 0) + (showAddSkillCell ? 1 : 0)
     }
-    
+        
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if indexPath.item == presenter?.userProfile.skills.count {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddSkillCell", for: indexPath) as! AddSkillCollectionViewCell
@@ -282,16 +287,6 @@ extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDel
             if indexPath.item < presenter?.userProfile.skills.count ?? 0 {
                 presenter?.deleteSkill(at: indexPath.item)
             }
-        }
-    }
-    
-    func getSkillsFromCollectionView() -> [String] {
-        let visibleCells = skillsCollectionView.visibleCells
-        return visibleCells.compactMap { cell in
-            if let skillLabel = cell.contentView.viewWithTag(100) as? UILabel, let skillName = skillLabel.text {
-                return skillName
-            }
-            return nil
         }
     }
 }

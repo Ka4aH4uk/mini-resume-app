@@ -27,5 +27,5 @@ ____
 ____
 ### Screenshots
 
-<img src="https://github.com/Ka4aH4uk/mini-resume-app/blob/master/Simulator%20Screenshot%20-%20iPhone%2011%20-%202023-08-15%20at%2017.16.48.png?raw=true" width="260"> <img src="https://github.com/Ka4aH4uk/mini-resume-app/blob/master/Simulator%20Screenshot%20-%20iPhone%2011%20-%202023-08-15%20at%2017.17.01.png?raw=true" width="260"> <img src="https://github.com/Ka4aH4uk/mini-resume-app/blob/master/Simulator%20Screenshot%20-%20iPhone%2011%20-%202023-08-15%20at%2017.17.18.png?raw=true" width="260">
+<img src="https://github.com/Ka4aH4uk/mini-resume-app/blob/master/ResumeApp.jpeg?raw=true"> 
 ____

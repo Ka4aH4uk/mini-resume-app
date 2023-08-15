@@ -27,13 +27,14 @@ final class ProfileViewController: UIViewController {
     
     private lazy var backView: UIView = {
         let backView = UIView(frame: .zero)
-        backView.layer.backgroundColor = UIColor(red: 0.953, green: 0.953, blue: 0.961, alpha: 1).cgColor
+        backView.layer.backgroundColor = UIColor.backGrey.cgColor
         return backView
     }()
     
     private lazy var titleLabel: UILabel = {
         let label = UILabel()
         label.textAlignment = .center
+        label.textColor = .myDarkGrey
         label.font = .sfproBold(size: 16)
         return label
     }()
@@ -52,6 +53,7 @@ final class ProfileViewController: UIViewController {
         let label = UILabel()
         label.numberOfLines = 2
         label.textAlignment = .center
+        label.textColor = .myDarkGrey
         label.font = .sfproBold(size: 24)
         label.lineBreakMode = .byWordWrapping
         return label
@@ -61,7 +63,7 @@ final class ProfileViewController: UIViewController {
         let label = UILabel()
         label.numberOfLines = 2
         label.textAlignment = .center
-        label.textColor = UIColor(red: 0.588, green: 0.584, blue: 0.608, alpha: 1)
+        label.textColor = .myLightGrey
         label.font = .sfproRegular(size: 14)
         return label
     }()
@@ -84,11 +86,10 @@ final class ProfileViewController: UIViewController {
     private lazy var locationLabel: UILabel = {
         let label = UILabel()
         label.numberOfLines = 1
-        label.textColor = UIColor(red: 0.588, green: 0.584, blue: 0.608, alpha: 1)
+        label.textColor = .myLightGrey
         label.font = .sfproRegular(size: 14)
         return label
     }()
-    
     
     private lazy var skillsTitleStackView: UIStackView = {
         let stackView = UIStackView()
@@ -100,7 +101,7 @@ final class ProfileViewController: UIViewController {
     private lazy var skillsTitleLabel: UILabel = {
         let label = UILabel()
         label.text = "Мои навыки"
-        label.textColor = UIColor(red: 0.192, green: 0.192, blue: 0.192, alpha: 1)
+        label.textColor = .myDarkGrey
         label.font = .sfproMedium(size: 16)
         return label
     }()
@@ -125,14 +126,14 @@ final class ProfileViewController: UIViewController {
     private lazy var aboutMeTitleLabel: UILabel = {
         let label = UILabel()
         label.text = "О себе"
-        label.textColor = UIColor(red: 0.192, green: 0.192, blue: 0.192, alpha: 1)
+        label.textColor = .myDarkGrey
         label.font = .sfproMedium(size: 16)
         return label
     }()
     
     private lazy var aboutMeTextLabel: UILabel = {
         let label = UILabel()
-        label.textColor = UIColor(red: 0.192, green: 0.192, blue: 0.192, alpha: 1)
+        label.textColor = .myDarkGrey
         label.font = .sfproRegular(size: 14)
         label.lineBreakMode = .byWordWrapping
         label.numberOfLines = 0
@@ -146,11 +147,16 @@ final class ProfileViewController: UIViewController {
         }
         
         let addAction = UIAlertAction(title: "Добавить", style: .default) { [weak self] _ in
-            if let skillName = alertController.textFields?.first?.text, !skillName.isEmpty {
-                self?.presenter?.saveSkills((self?.presenter?.userProfile.skills ?? []) + [skillName])
-            }
+            guard let skillName = alertController.textFields?.first?.text, !skillName.isEmpty else { return }
+            
+            self?.presenter?.saveSkills((self?.presenter?.userProfile.skills ?? []) + [skillName])
+            alertController.textFields?.first?.text = nil
         }
-        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel, handler: nil)
+        
+        let cancelAction = UIAlertAction(title: "Отмена", style: .cancel) { [weak self] _ in
+            alertController.textFields?.first?.text = nil
+        }
+        
         alertController.addAction(addAction)
         alertController.addAction(cancelAction)
         
@@ -169,20 +175,20 @@ final class ProfileViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = UIColor(red: 0.953, green: 0.953, blue: 0.961, alpha: 1)
+        view.backgroundColor = .backGrey
         
         setupUI()
         setupConstraints()
         
+        skillsCollectionView.backgroundColor = .white
         skillsCollectionView.dataSource = self
         skillsCollectionView.delegate = self
         skillsCollectionView.isScrollEnabled = false
-        skillsCollectionView.register(SkillCollectionViewCell.self, forCellWithReuseIdentifier: "SkillCell")
-        skillsCollectionView.register(AddSkillCollectionViewCell.self, forCellWithReuseIdentifier: "AddSkillCell")
+        skillsCollectionView.register(SkillCollectionViewCell.self, forCellWithReuseIdentifier: SkillCollectionViewCell.reuseIdentifier)
+        skillsCollectionView.register(AddSkillCollectionViewCell.self, forCellWithReuseIdentifier: AddSkillCollectionViewCell.reuseIdentifier)
         
         presenter = ProfilePresenter(view: self)
         presenter?.setView()
-        
         reloadSkills()
     }
     
@@ -207,19 +213,8 @@ final class ProfileViewController: UIViewController {
         }
     }
     
-    private func updateCollectionViewHeight() {
-        let contentHeight = skillsCollectionView.contentSize.height
-        let minimumHeight: CGFloat = 56
-        let newHeight = max(contentHeight + 20, minimumHeight)
-        skillsCollectionViewHeightConstraint.constant = newHeight
-        contentView.layoutIfNeeded()
-    }
-    
     @objc private func editButtonTapped() {
-        isEditingSkills.toggle()
-        showAddSkillCell = isEditingSkills
-        showEditSkillsMode(isEditingSkills)
-        reloadSkills()
+        presenter?.didTapEditSkills()
     }
 }
 
@@ -236,7 +231,10 @@ extension ProfileViewController: ProfileView {
     func showEditSkillsMode(_ isEditing: Bool) {
         self.isEditingSkills = isEditing
         editSkillsButton.isSelected = isEditing
-        skillsCollectionView.reloadData()
+        if isEditing {
+            showAddSkillCell = true
+        }
+        reloadSkills()
     }
     
     func showEditSkillAlert(completion: @escaping (String?) -> Void) {
@@ -248,6 +246,14 @@ extension ProfileViewController: ProfileView {
         skillsCollectionView.layoutIfNeeded()
         updateCollectionViewHeight()
     }
+    
+    func updateCollectionViewHeight() {
+        let contentHeight = skillsCollectionView.contentSize.height
+        let minimumHeight: CGFloat = 56
+        let newHeight = max(contentHeight + 12, minimumHeight)
+        skillsCollectionViewHeightConstraint.constant = newHeight
+        contentView.layoutIfNeeded()
+    }
 }
 
 // MARK: -- UICollectionViewDataSource, UICollectionViewDelegateFlowLayout
@@ -255,30 +261,30 @@ extension ProfileViewController: UICollectionViewDataSource, UICollectionViewDel
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         return (presenter?.userProfile.skills.count ?? 0) + (showAddSkillCell ? 1 : 0)
     }
-        
+    
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         if indexPath.item == presenter?.userProfile.skills.count {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "AddSkillCell", for: indexPath) as! AddSkillCollectionViewCell
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: AddSkillCollectionViewCell.reuseIdentifier, for: indexPath) as? AddSkillCollectionViewCell
             
-            cell.addButtonTappedHandler = { [weak self] in
+            cell?.addButtonTappedHandler = { [weak self] in
                 self?.presenter?.didTapAddSkill()
             }
             
-            cell.isHidden = !isEditingSkills
-
-            return cell
+            cell?.isHidden = !isEditingSkills
+            
+            return cell ?? UICollectionViewCell()
         } else {
-            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "SkillCell", for: indexPath) as! SkillCollectionViewCell
+            let cell = collectionView.dequeueReusableCell(withReuseIdentifier: SkillCollectionViewCell.reuseIdentifier, for: indexPath) as? SkillCollectionViewCell
             
             let skill = presenter?.userProfile.skills[indexPath.row]
-            cell.configure(with: skill ?? "", maxWidth: skillsCollectionView.bounds.width)
-            cell.isEditing = isEditingSkills
+            cell?.configure(with: skill ?? "", maxWidth: skillsCollectionView.bounds.width)
+            cell?.isEditing = isEditingSkills
             
-            cell.deleteButtonTappedHandler = { [weak self] in
+            cell?.deleteButtonTappedHandler = { [weak self] in
                 self?.presenter?.deleteSkill(at: indexPath.row)
             }
             
-            return cell
+            return cell ?? UICollectionViewCell()
         }
     }
     

@@ -8,6 +8,8 @@
 import UIKit
 
 class AddSkillCollectionViewCell: UICollectionViewCell {
+    static let reuseIdentifier = "AddSkillCell"
+    
     private lazy var addButton: UIButton = {
         let button = UIButton(type: .system)
         button.tintColor = .black

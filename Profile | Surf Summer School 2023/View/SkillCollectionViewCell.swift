@@ -13,6 +13,7 @@ class SkillCollectionViewCell: UICollectionViewCell {
     private lazy var skillTextLabel: UILabel = {
         let label = UILabel()
         label.font = .sfproRegular(size: 14)
+        label.textColor = .myDarkGrey
         label.lineBreakMode = .byTruncatingTail
         return label
     }()

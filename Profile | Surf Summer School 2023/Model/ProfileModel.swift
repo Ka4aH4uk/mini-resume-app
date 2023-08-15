@@ -16,4 +16,6 @@ struct UserProfile {
     let location: String
     var skills: [String]
     let aboutMe: String
+    
+    var isEditingSkills: Bool = false
 }

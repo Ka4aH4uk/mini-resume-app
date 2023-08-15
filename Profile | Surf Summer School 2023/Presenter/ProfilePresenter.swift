@@ -11,6 +11,7 @@ protocol ProfileView: AnyObject {
     func showProfile(_ profile: UserProfile)
     func showEditSkillsMode(_ isEditing: Bool)
     func showEditSkillAlert(completion: @escaping (String?) -> Void)
+    func updateCollectionViewHeight()
     func reloadSkills()
 }
 
@@ -19,7 +20,7 @@ protocol ProfilePresenterProtocol {
     func didTapEditSkills()
     func didTapAddSkill()
     func deleteSkill(at index: Int)
-    func saveSkills(_ skills: [String])
+    func saveSkills(_ skills: [String], shouldShowAddSkillCell: Bool)
 }
 
 class ProfilePresenter: ProfilePresenterProtocol {
@@ -28,7 +29,7 @@ class ProfilePresenter: ProfilePresenterProtocol {
     
     init(view: ProfileView) {
         self.view = view
-        self.userProfile = UserProfile(label: "Профиль", photo: UIImage(named: "me") ?? UIImage(cgImage: "photo" as! CGImage), name: "Кочетков Константин Евгеньевич", slogan: "Начинающий iOS-разработчик, опыт менее 1 года", location: "Москва, Россия", skills: ["MVP/MVVM", "Rest API", "Xcode", "DataSource", "SOLID", "Git", "SwiftUI", "CoreData", "CoreAnimation", "OOP", "UserDefaults", "GCD", "JSON", "UIKit", "Alamofire"], aboutMe: "Всем привет! Я недавно успешно завершил курс iOS-разработчика от Skillbox. Этот курс дал мне уникальную возможность окунуться в мир разработки приложений для iOS и расширить свои навыки в этой увлекательной сфере. В процессе обучения я более глубоко изучил Swift, освоил различные фреймворки и научился создавать пользовательские интерфейсы. Также я получил практический опыт разработки полноценных приложений, включая работу с базами данных, сетевыми запросами и многое другое. Я горд дипломом iOS-разработчика и готов принять вызовы, которые мир iOS-разработки мне бросает. Если вам нужен молодой iOS-разработчик для вашего проекта, я готов взяться за увлекательные проекты и претворять свои идеи в реальность. С нетерпением жду новых вызовов и возможностей, которые ждут меня впереди!")
+        self.userProfile = UserProfile(label: "Профиль", photo: UIImage(named: "me") ?? UIImage(cgImage: "photo" as! CGImage), name: "Кочетков Константин Евгеньевич", slogan: "Начинающий iOS-разработчик, опыт менее 1 года", location: "Москва, Россия -> Ташкент, Узбекистан", skills: ["MVP/MVVM", "Rest API", "Xcode", "DataSource", "SOLID", "Git", "SwiftUI", "CoreData", "CoreAnimation", "OOP", "UserDefaults", "GCD", "JSON", "UIKit", "Alamofire"], aboutMe: "Всем привет! Я недавно успешно завершил курс iOS-разработчика от Skillbox. Этот курс дал мне уникальную возможность окунуться в мир разработки приложений для iOS и расширить свои навыки в этой увлекательной сфере. В процессе обучения я более глубоко изучил Swift, освоил различные фреймворки и научился создавать пользовательские интерфейсы. Также я получил практический опыт разработки полноценных приложений, включая работу с базами данных, сетевыми запросами и многое другое. Я горд дипломом iOS-разработчика и готов принять вызовы, которые мир iOS-разработки мне бросает. Если вам нужен молодой iOS-разработчик для вашего проекта, я готов взяться за увлекательные проекты и претворять свои идеи в реальность. С нетерпением жду новых вызовов и возможностей, которые ждут меня впереди!")
     }
     
     func setView() {
@@ -36,7 +37,8 @@ class ProfilePresenter: ProfilePresenterProtocol {
     }
     
     func didTapEditSkills() {
-        view?.showEditSkillsMode(true)
+        userProfile.isEditingSkills.toggle()
+        view?.showEditSkillsMode(userProfile.isEditingSkills)
     }
     
     func didTapAddSkill() {
@@ -44,7 +46,7 @@ class ProfilePresenter: ProfilePresenterProtocol {
             if let skillName = skillName, !skillName.isEmpty {
                 var updatedSkills = self?.userProfile.skills ?? []
                 updatedSkills.append(skillName)
-                self?.saveSkills(updatedSkills)
+                self?.saveSkills(updatedSkills, shouldShowAddSkillCell: true)
             }
         }
     }
@@ -54,9 +56,13 @@ class ProfilePresenter: ProfilePresenterProtocol {
         view?.reloadSkills()
     }
     
-    func saveSkills(_ skills: [String]) {
+    func saveSkills(_ skills: [String], shouldShowAddSkillCell: Bool = true) {
         userProfile.skills = skills
-        view?.showEditSkillsMode(false)
         view?.reloadSkills()
+        view?.updateCollectionViewHeight()
+        
+        if shouldShowAddSkillCell {
+            view?.showEditSkillsMode(true)
+        }
     }
 }

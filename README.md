@@ -28,4 +28,3 @@ ____
 ### Screenshots
 
 <img src="https://github.com/Ka4aH4uk/mini-resume-app/blob/master/ResumeApp.jpeg?raw=true"> 
-____
